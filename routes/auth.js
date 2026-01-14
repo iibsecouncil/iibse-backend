@@ -1,35 +1,54 @@
 const express = require("express");
-const nodemailer = require("nodemailer");
+const axios = require("axios");
 const router = express.Router();
 
 router.post("/send-password", async (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({ message: "Email required" });
-  }
-
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+    const { email } = req.body;
+    if (!email) {
+      return res.json({ success: false, message: "Email required" });
+    }
+
+    await axios.post(
+      "https://api.zeptomail.in/v1.1/email",
+      {
+        bounce_address: "bounce@zeptomail.in",
+        from: {
+          address: process.env.EMAIL_FROM,
+          name: "IIBSE Council"
+        },
+        to: [
+          {
+            email_address: {
+              address: email,
+              name: email
+            }
+          }
+        ],
+        subject: "IIBSE Login Access",
+        textbody:
+          "Your login request has been received.\n\n" +
+          "Login verification will be enabled shortly.\n\n" +
+          "— IIBSE Council"
+      },
+      {
+        headers: {
+          Authorization: `Zoho-enczapikey ${process.env.ZEPTO_API_KEY}`,
+          "Content-Type": "application/json"
+        }
       }
+    );
+
+    return res.json({
+      success: true,
+      message: "Password sent successfully"
     });
-
-    await transporter.sendMail({
-      from: `IIBSE Council <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "IIBSE Login Password",
-      text: "Your login password has been generated successfully."
+  } catch (err) {
+    console.error("ZEPTO API ERROR:", err.response?.data || err.message);
+    return res.json({
+      success: false,
+      message: "Email failed"
     });
-
-    res.json({ success: true, message: "Mail sent successfully" });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Mail failed" });
   }
 });
 
