@@ -39,16 +39,10 @@ router.post("/send-password", async (req, res) => {
       }
     );
 
-    return res.json({
-      success: true,
-      message: "Password sent successfully"
-    });
+    res.json({ success: true, message: "Password sent successfully" });
   } catch (err) {
     console.error("ZEPTO API ERROR:", err.response?.data || err.message);
-    return res.json({
-      success: false,
-      message: "Email failed"
-    });
+    res.json({ success: false, message: "Email failed" });
   }
 });
 
